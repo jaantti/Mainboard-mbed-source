@@ -1,0 +1,13 @@
+#include "mbed.h"
+#include "motor.h"
+
+DigitalOut led(LED1);
+
+int main() {
+  while(1) {
+        led = 1;
+        wait(0.2);
+        led = 0;
+        wait(0.2);
+    }
+}
