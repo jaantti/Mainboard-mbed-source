@@ -1,6 +1,6 @@
 #include "motor.h"
 
-Motor::Motor(Serial *pc, PwmOut *pwm, DigitalOut *dir1, DigitalOut *dir2, DigitalIn *fault, InterruptIn *enca, InterruptIn *encb) {
+Motor::Motor(Serial *pc, PwmOut *pwm, DigitalOut *dir1, DigitalOut *dir2, DigitalIn *fault, InterruptIn *enca, InterruptIn *encb, DigitalOut *led) {
     _pc = pc;
     _pwm = pwm;
     _dir1 = dir1;
@@ -8,11 +8,14 @@ Motor::Motor(Serial *pc, PwmOut *pwm, DigitalOut *dir1, DigitalOut *dir2, Digita
     _fault = fault;
     _enca = enca;
     _encb = encb;
+    _led = led;
 
     enc_last = 0;
 
     _enca->rise(this, &Motor::decode);
+    _enca->fall(this, &Motor::decode);
     _encb->rise(this, &Motor::decode);
+    _encb->fall(this, &Motor::decode);
 
     pid_on = 1;
     motor_polarity = 1;
@@ -29,6 +32,8 @@ Motor::Motor(Serial *pc, PwmOut *pwm, DigitalOut *dir1, DigitalOut *dir2, Digita
     stallLevel = 0;
     stallChanged = 0;
     currentPWM = 0;
+
+    wcount.value = 0;
 
     _pwm->period_us(PWM_PERIOD_US);
 }
@@ -60,6 +65,12 @@ void Motor::backward(float pwm) {
 }
 
 void Motor::pid() {
+    decoder_count.value = wcount.value;
+    speed = wcount.value;
+    wcount.value = 0;
+
+    if (!pid_on) return;
+
     err_prev = err;
     err = sp_pid - speed;
 
@@ -112,10 +123,6 @@ void Motor::pid() {
         }
     }
 
-    decoder_count.value = wcount.value;
-    speed = wcount.value;
-    wcount.value = 0;
-
     if ((fail_counter == 100) && failsafe) {
         sp_pid = 0;
         reset_pid();
@@ -156,7 +163,9 @@ void Motor::decode() {
     enc_now = _enca->read() | (_encb->read() << 1);
     enc_dir = (enc_last & 1) ^ ((enc_now & 2) >> 1);
     enc_last = enc_now;
-    if (enc_dir) {
+    *_led = enc_dir;
+    //_pc->printf("%d\n", enc_now);
+    if (enc_dir & 1) {
         if (motor_polarity) wcount.value--;
         else wcount.value++;
     }
@@ -164,6 +173,7 @@ void Motor::decode() {
         if (motor_polarity) wcount.value++;
         else wcount.value--;
     }
+    //_pc->printf("wcount:%d\n", wcount.value);
 }
 
 void Motor::setup() {
@@ -205,4 +215,8 @@ void Motor::setSpeed(int16_t speed) {
     sp_pid = speed;
     if (sp_pid == 0) reset_pid();
     fail_counter = 0;
+}
+
+void Motor::getPIDGain(char *gain) {
+    sprintf(gain, "PID:%d,%d,%d", pgain, igain, dgain);
 }

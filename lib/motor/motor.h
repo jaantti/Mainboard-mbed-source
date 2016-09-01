@@ -5,7 +5,12 @@
 
 class Motor {
 public:
-    Motor(Serial *pc, PwmOut *pwm, DigitalOut *dir1, DigitalOut *dir2, DigitalIn *fault, InterruptIn *enca, InterruptIn *encb);
+    Motor() = default;
+    Motor(Serial *pc, PwmOut *pwm, DigitalOut *dir1, DigitalOut *dir2, DigitalIn *fault, InterruptIn *enca, InterruptIn *encb, DigitalOut *led);
+    Motor (const Motor& ) = default;
+
+    uint8_t pid_on;
+
     void setup();
     /*
      * Run this to update speed
@@ -14,8 +19,11 @@ public:
     void init();
     int16_t getSpeed();
     void setSpeed (int16_t speed);
+    void getPIDGain(char *gain);
+    void forward(float pwm);
+    void backward(float pwm);
 private:
-    const uint PWM_PERIOD_US = 100;
+    static const uint PWM_PERIOD_US = 1000;
 
     Serial *_pc;
     PwmOut *_pwm;
@@ -24,6 +32,7 @@ private:
     DigitalIn *_fault;
     InterruptIn *_enca;
     InterruptIn *_encb;
+    DigitalOut *_led;
 
     union doublebyte {
         unsigned int value;
@@ -37,7 +46,7 @@ private:
     union doublebyte decoder_count;
 
     uint8_t dir;
-    uint8_t pid_on;
+
     uint8_t motor_polarity;
     uint8_t fail_counter;
     uint8_t send_speed;
@@ -63,8 +72,6 @@ private:
     uint8_t stallChanged;
     int16_t currentPWM;
 
-    void forward(float pwm);
-    void backward(float pwm);
     void reset_pid();
     void decode();
 };
