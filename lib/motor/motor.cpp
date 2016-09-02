@@ -12,28 +12,18 @@ Motor::Motor(Serial *pc, PwmOut *pwm, DigitalOut *dir1, DigitalOut *dir2, Digita
 
     enc_last = 0;
 
-    _enca->rise(this, &Motor::decode);
-    _enca->fall(this, &Motor::decode);
-    _encb->rise(this, &Motor::decode);
-    _encb->fall(this, &Motor::decode);
-
     pid_on = 1;
-    motor_polarity = 1;
-    fail_counter = 0;
-    send_speed = 0;
-    failsafe = 1;
-    leds_on = 1;
-
-    stall_counter = 0;
-    stallCount = 0;
-    prevStallCount = 0;
-    stallWarningLimit = 60;
-    stallErrorLimit = 300;
-    stallLevel = 0;
-    stallChanged = 0;
     currentPWM = 0;
 
-    wcount.value = 0;
+    encTicks = 0;
+    motor_polarity = 0;
+
+    pidSpeed0 = 0;
+    pidSpeed1 = 0;
+    pidError0 = 0;
+    pidError1 = 0;
+    pidError2 = 0;
+    pidSetpoint = 0;
 
     _pwm->period_us(PWM_PERIOD_US);
 }
@@ -64,10 +54,30 @@ void Motor::backward(float pwm) {
     currentPWM = -pwm;
 }
 
-void Motor::pid() {
-    decoder_count.value = wcount.value;
-    speed = wcount.value;
-    wcount.value = 0;
+void Motor::pid2(int16_t encTicks) {
+    speed = encTicks;
+
+    if (!pid_on) return;
+    pidError2 = pidError1;
+    pidError1 = pidError0;
+    pidError0 = pidSetpoint - speed;
+    pidSpeed1 = pidSpeed0;
+    int16_t p = pgain * (pidError0 - pidError1);
+    int16_t i = igain * (pidError0 + pidError1) / 2;
+    int16_t d = dgain * (pidError0 - 2 * pidError1 + pidError2);
+    pidSpeed0 = pidSpeed1 + p + i + d;
+
+
+    if (pidSpeed0 > 255) pidSpeed0 = 255;
+    if (pidSpeed0 < -255) pidSpeed0 = -255;
+
+    if (pidSpeed0 > 0) forward(pidSpeed0 / 255.0);
+    else backward(pidSpeed0 / -255.0);
+}
+
+void Motor::pid(int16_t encTicks) {
+    speed = encTicks;
+    encTicks = 0;
 
     if (!pid_on) return;
 
@@ -97,11 +107,13 @@ void Motor::pid() {
             stallCount--;
         }
 
+        _pc->printf("pwm:%d\n", pwm);
+
         if (pwm < 0) {
             pwm *= -1;
-            backward(pwm);
+            backward(pwm/255.0);
         } else {
-            forward(pwm);
+            forward(pwm/255.0);
         }
 
         if ((stallCount == stallWarningLimit - 1) && (prevStallCount == stallWarningLimit)) {
@@ -159,34 +171,17 @@ void Motor::reset_pid() {
     forward(0);
 }
 
-void Motor::decode() {
-    enc_now = _enca->read() | (_encb->read() << 1);
-    enc_dir = (enc_last & 1) ^ ((enc_now & 2) >> 1);
-    enc_last = enc_now;
-    *_led = enc_dir;
-    //_pc->printf("%d\n", enc_now);
-    if (enc_dir & 1) {
-        if (motor_polarity) wcount.value--;
-        else wcount.value++;
-    }
-    else {
-        if (motor_polarity) wcount.value++;
-        else wcount.value--;
-    }
-    //_pc->printf("wcount:%d\n", wcount.value);
-}
 
 void Motor::setup() {
     pid_on = 0;
     forward(50);
-    wcount.value = 0;
+    encTicks = 0;
     wait_ms(500);
 
     if (speed < 0) {
         motor_polarity ^= 1;
     }
 
-    sp_pid = 0;
     reset_pid();
     forward(0);
     pid_on = 1;
@@ -195,14 +190,15 @@ void Motor::setup() {
 void Motor::init() {
     dir = 0;
     motor_polarity = 0;
-    pgain = 6;
-    igain = 8;
+    pgain = 1;
+    igain = 0;
+    dgain = 0;
     pid_multi = 32;
     imax = 255*pid_multi;
     err_max = 4000;
     pwm_min = 25;
     intgrl = 0;
-    count = 0;
+    //count = 0;
     speed = 0;
     err = 0;
 }
@@ -213,6 +209,7 @@ int16_t Motor::getSpeed() {
 
 void Motor::setSpeed(int16_t speed) {
     sp_pid = speed;
+    pidSetpoint = speed;
     if (sp_pid == 0) reset_pid();
     fail_counter = 0;
 }
