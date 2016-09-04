@@ -52,12 +52,12 @@ private:
     int16_t currentPWM;
     uint8_t motor_polarity;
 
-    int16_t pidSpeed0;
-    int16_t pidSpeed1;
-    int16_t pidError0;
-    int16_t pidError1;
-    int16_t pidError2;
-    int16_t pidSetpoint;
+    float pidSpeed0;
+    float pidSpeed1;
+    float pidError0;
+    float pidError1;
+    float pidError2;
+    float pidSetpoint;
 
 /*
     union doublebyte wcount;

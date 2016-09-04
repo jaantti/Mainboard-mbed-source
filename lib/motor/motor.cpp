@@ -56,23 +56,33 @@ void Motor::backward(float pwm) {
 
 void Motor::pid2(int16_t encTicks) {
     speed = encTicks;
+    float pidDiv = 100.0;
 
     if (!pid_on) return;
     pidError2 = pidError1;
     pidError1 = pidError0;
     pidError0 = pidSetpoint - speed;
     pidSpeed1 = pidSpeed0;
-    int16_t p = pgain * (pidError0 - pidError1);
-    int16_t i = igain * (pidError0 + pidError1) / 2;
-    int16_t d = dgain * (pidError0 - 2 * pidError1 + pidError2);
+    float p = pgain / pidDiv * (pidError0 - pidError1);
+    float i = igain / pidDiv * (pidError0 + pidError1) / 2.0;
+    float d = dgain / pidDiv * (pidError0 - 2.0 * pidError1 + pidError2);
     pidSpeed0 = pidSpeed1 + p + i + d;
 
 
     if (pidSpeed0 > 255) pidSpeed0 = 255;
     if (pidSpeed0 < -255) pidSpeed0 = -255;
 
-    if (pidSpeed0 > 0) forward(pidSpeed0 / 255.0);
-    else backward(pidSpeed0 / -255.0);
+    if (pidSpeed0 > 0) forward((pidSpeed0) / 255.0);
+    else backward((pidSpeed0) / -255.0);
+
+    if (pidSetpoint == 0) {
+        forward(0);
+        pidError0 = 0;
+        pidError1 = 0;
+        pidError2 = 0;
+        pidSpeed0 = 0;
+        pidSpeed1 = 0;
+    }
 }
 
 void Motor::pid(int16_t encTicks) {

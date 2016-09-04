@@ -82,10 +82,6 @@ void parseCommad (char *command) {
     }
     if (command[0] == 's') {
         pc.printf("s:%d\n", motors[0].getSpeed());
-    } else if (command[0] == 'p') {
-        char gain[20];
-        motors[0].getPIDGain(gain);
-        pc.printf("%s\n", gain);
     } else if (command[0] == 'w' && command[1] == 'l') {
         int16_t speed = atoi(command + 2);
         motors[0].pid_on = 0;
@@ -100,6 +96,10 @@ void parseCommad (char *command) {
     } else if (command[0] == 'p' && command[1] == 'd') {
         uint8_t dGain = atoi(command + 2);
         motors[0].dgain = dGain;
+    } else if (command[0] == 'p') {
+        char gain[20];
+        motors[0].getPIDGain(gain);
+        pc.printf("%s\n", gain);
     }
 }
 
