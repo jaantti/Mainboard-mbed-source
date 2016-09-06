@@ -1,15 +1,12 @@
 #include "motor.h"
 
-Motor::Motor(Serial *pc, PwmOut *pwm, DigitalOut *dir1, DigitalOut *dir2, DigitalIn *fault, InterruptIn *enca, InterruptIn *encb, DigitalOut *led) {
+Motor::Motor(Serial *pc, PwmOut *pwm, DigitalOut *dir1, DigitalOut *dir2, DigitalIn *fault) {
     _pc = pc;
     _pwm = pwm;
     _dir1 = dir1;
     _dir2 = dir2;
     _fault = fault;
-    _enca = enca;
-    _encb = encb;
-    _led = led;
-
+    
     enc_last = 0;
 
     pid_on = 1;

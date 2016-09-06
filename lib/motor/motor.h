@@ -6,7 +6,7 @@
 class Motor {
 public:
     Motor() = default;
-    Motor(Serial *pc, PwmOut *pwm, DigitalOut *dir1, DigitalOut *dir2, DigitalIn *fault, InterruptIn *enca, InterruptIn *encb, DigitalOut *led);
+    Motor(Serial *pc, PwmOut *pwm, DigitalOut *dir1, DigitalOut *dir2, DigitalIn *fault);
     Motor (const Motor& ) = default;
 
     uint8_t pid_on;
@@ -33,10 +33,7 @@ private:
     PwmOut *_pwm;
     DigitalOut *_dir1;
     DigitalOut *_dir2;
-    DigitalIn *_fault;
-    InterruptIn *_enca;
-    InterruptIn *_encb;
-    DigitalOut *_led;
+    DigitalIn *_fault;    
 
     union doublebyte {
         unsigned int value;

@@ -1,45 +1,85 @@
 #include "mbed.h"
 #include "pins.h"
 #include "motor.h"
+#include "definitions.h"
 
-const int numberOfMotors = 3;
+typedef void (*VoidArray) ();
 
 DigitalOut led(LED1);
 DigitalOut l(LED2);
 Serial pc(USBTX, USBRX);
 
-Ticker motor0PidTicker;
+Ticker motorPidTicker[NUMBER_OF_MOTORS];
 
 char buf[16];
 bool serialData = false;
 int serialCount = 0;
 
-volatile int16_t motor0Ticks = 0;
-volatile uint8_t motor0EncNow = 0;
-volatile uint8_t motor0EncLast = 0;
+volatile int16_t motorTicks[NUMBER_OF_MOTORS];
+volatile uint8_t motorEncNow[NUMBER_OF_MOTORS];
+volatile uint8_t motorEncLast[NUMBER_OF_MOTORS];
 
 //Motor m1(&pc, &MOTOR1_PWM, &MOTOR1_DIR1, &MOTOR1_DIR2, &MOTOR1_FAULT, &MOTOR1_ENCA, &MOTOR1_ENCB);
-Motor motors[numberOfMotors];
+Motor motors[NUMBER_OF_MOTORS];
 
 void serialInterrupt();
 void parseCommad(char *command);
+
 void motor0EncTick();
+void motor1EncTick();
+void motor2EncTick();
+#if NUMBER_OF_MOTORS == 4
+void motor3EncTick();
+#endif
+
 void motor0PidTick();
+void motor1PidTick();
+void motor2PidTick();
+#if NUMBER_OF_MOTORS == 4
+void motor3PidTick();
+#endif
 
 int main() {
-    MOTOR0_ENCA.mode(PullNone);
-    MOTOR0_ENCB.mode(PullNone);
+    void (*encTicker[])()  = {
+        motor0EncTick,
+        motor1EncTick,
+        motor2EncTick,
+        #if NUMBER_OF_MOTORS == 4
+        motor3EncTick
+        #endif
+    };
 
-    motors[0] = Motor(&pc, &MOTOR0_PWM, &MOTOR0_DIR1, &MOTOR0_DIR2, &MOTOR0_FAULT, &MOTOR0_ENCA, &MOTOR0_ENCB, &led);
-    MOTOR0_ENCA.rise(&motor0EncTick);
-    MOTOR0_ENCA.fall(&motor0EncTick);
-    MOTOR0_ENCB.rise(&motor0EncTick);
-    MOTOR0_ENCB.fall(&motor0EncTick);
+    VoidArray pidTicker[] = {
+        motor0PidTick,
+        motor1PidTick,
+        motor2PidTick,
+        #if NUMBER_OF_MOTORS == 4
+        motor3PidTick
+        #endif
+    };
 
-    motor0PidTicker.attach(&motor0PidTick, 0.1);
+    for (int i = 0; i < NUMBER_OF_MOTORS; i++) {
+        MotorEncA[i]->mode(PullNone);
+        MotorEncB[i]->mode(PullNone);
+
+        motors[i] = Motor(&pc, MotorPwm[i], MotorDir1[i], MotorDir2[i], MotorFault[i]);
+
+        motorTicks[i] = 0;
+        motorEncNow[i] = 0;
+        motorEncLast[i] = 0;
+
+        MotorEncA[i]->rise(encTicker[i]);
+        MotorEncA[i]->fall(encTicker[i]);
+        MotorEncB[i]->rise(encTicker[i]);
+        MotorEncB[i]->fall(encTicker[i]);
+
+        motorPidTicker[i].attach(&motor0PidTick, 0.1);
+
+        motors[i].init();
+    }
 
     pc.printf("Start\n");
-    motors[0].init();
+
     pc.attach(&serialInterrupt);
     int count = 0;
     while(1) {
@@ -103,19 +143,16 @@ void parseCommad (char *command) {
     }
 }
 
-void motor0EncTick() {
-    uint8_t enc_dir;
-    motor0EncNow = MOTOR0_ENCA.read() | (MOTOR0_ENCB.read() << 1);
-    enc_dir = (motor0EncLast & 1) ^ ((motor0EncNow & 2) >> 1);
-    motor0EncLast = motor0EncNow;
-    //_led = enc_dir;
-    //_pc->printf("%d\n", enc_now);
+MOTOR_ENC_TICK(0)
+MOTOR_ENC_TICK(1)
+MOTOR_ENC_TICK(2)
+#if NUMBER_OF_MOTORS == 4
+MOTOR_ENC_TICK(3)
+#endif
 
-    if (enc_dir & 1) motor0Ticks++;
-    else motor0Ticks--;
-}
-
-void motor0PidTick() {
-    motors[0].pid2(motor0Ticks);
-    motor0Ticks = 0;
-}
+MOTOR_PID_TICK(0)
+MOTOR_PID_TICK(1)
+MOTOR_PID_TICK(2)
+#if NUMBER_OF_MOTORS == 4
+MOTOR_PID_TICK(3)
+#endif
