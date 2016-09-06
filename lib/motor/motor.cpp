@@ -6,7 +6,7 @@ Motor::Motor(Serial *pc, PwmOut *pwm, DigitalOut *dir1, DigitalOut *dir2, Digita
     _dir1 = dir1;
     _dir2 = dir2;
     _fault = fault;
-    
+
     enc_last = 0;
 
     pid_on = 1;
@@ -197,8 +197,8 @@ void Motor::setup() {
 void Motor::init() {
     dir = 0;
     motor_polarity = 0;
-    pgain = 1;
-    igain = 0;
+    pgain = 50;
+    igain = 10;
     dgain = 0;
     pid_multi = 32;
     imax = 255*pid_multi;

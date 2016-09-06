@@ -19,7 +19,6 @@ volatile int16_t motorTicks[NUMBER_OF_MOTORS];
 volatile uint8_t motorEncNow[NUMBER_OF_MOTORS];
 volatile uint8_t motorEncLast[NUMBER_OF_MOTORS];
 
-//Motor m1(&pc, &MOTOR1_PWM, &MOTOR1_DIR1, &MOTOR1_DIR2, &MOTOR1_FAULT, &MOTOR1_ENCA, &MOTOR1_ENCB);
 Motor motors[NUMBER_OF_MOTORS];
 
 void serialInterrupt();
@@ -73,7 +72,7 @@ int main() {
         MotorEncB[i]->rise(encTicker[i]);
         MotorEncB[i]->fall(encTicker[i]);
 
-        motorPidTicker[i].attach(&motor0PidTick, 0.1);
+        motorPidTicker[i].attach(pidTicker[i], 0.1);
 
         motors[i].init();
     }
@@ -84,7 +83,9 @@ int main() {
     int count = 0;
     while(1) {
         if (count % 20 == 0) {
-            pc.printf("s:%d\n", motors[0].getSpeed());
+            for (int i = 0; i < NUMBER_OF_MOTORS; i++) {
+                pc.printf("s%d:%d\n", i, motors[i].getSpeed());
+            }
         }
         if (serialData) {
             char temp[16];
@@ -121,7 +122,9 @@ void parseCommad (char *command) {
         motors[0].setSpeed(speed);
     }
     if (command[0] == 's') {
-        pc.printf("s:%d\n", motors[0].getSpeed());
+        for (int i = 0; i < NUMBER_OF_MOTORS; i++) {
+            pc.printf("s%d:%d\n", i, motors[i].getSpeed());
+        }
     } else if (command[0] == 'w' && command[1] == 'l') {
         int16_t speed = atoi(command + 2);
         motors[0].pid_on = 0;

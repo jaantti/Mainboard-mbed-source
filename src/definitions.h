@@ -1,7 +1,7 @@
 #ifndef DEFINITIONS_H_
 #define DEFINITIONS_H_ value
 
-#define NUMBER_OF_MOTORS 1
+#define NUMBER_OF_MOTORS 2
 
 #define MOTOR_PWM(n) MOTOR ## n ## _PWM
 #define MOTOR_DIR1(n) MOTOR ## n ## _DIR1
@@ -21,8 +21,7 @@
                             }
 
 #define MOTOR_PID_TICK(i)   void motor ## i ## PidTick() { \
-                                const uint8_t motor = 0; \
-                                motors[motor].pid2(motorTicks[motor]); \
-                                motorTicks[motor] = 0; \
+                                motors[i].pid2(motorTicks[i]); \
+                                motorTicks[i] = 0; \
                             }
 #endif
