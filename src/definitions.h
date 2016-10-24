@@ -1,7 +1,7 @@
 #ifndef DEFINITIONS_H_
 #define DEFINITIONS_H_ value
 
-#define NUMBER_OF_MOTORS 2
+#define NUMBER_OF_MOTORS 3
 
 #define MOTOR_PWM(n) MOTOR ## n ## _PWM
 #define MOTOR_DIR1(n) MOTOR ## n ## _DIR1

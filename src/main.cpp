@@ -2,12 +2,13 @@
 #include "pins.h"
 #include "motor.h"
 #include "definitions.h"
+#include "USBSerial.h"
 
 typedef void (*VoidArray) ();
 
 DigitalOut led(LED1);
 DigitalOut l(LED2);
-Serial pc(USBTX, USBRX);
+USBSerial pc;
 
 Ticker motorPidTicker[NUMBER_OF_MOTORS];
 
