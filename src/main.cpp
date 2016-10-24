@@ -12,7 +12,9 @@ USBSerial pc;
 
 Ticker motorPidTicker[NUMBER_OF_MOTORS];
 
-char buf[16];
+const unsigned int SERIAL_BUFFER_SIZE = 16;
+
+char buf[SERIAL_BUFFER_SIZE];
 bool serialData = false;
 int serialCount = 0;
 
@@ -109,6 +111,10 @@ void serialInterrupt(){
     while(pc.readable()) {
         buf[serialCount] = pc.getc();
         serialCount++;
+        if (serialCount >= SERIAL_BUFFER_SIZE) {
+            memset(buf, 0, SERIAL_BUFFER_SIZE);
+            serialCount = 0;
+        }
     }
     if (buf[serialCount - 1] == '\n') {
         serialData = true;
