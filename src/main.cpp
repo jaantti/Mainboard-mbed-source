@@ -39,7 +39,7 @@ void motor3PidTick();
 #endif
 
 int main() {
-    void (*encTicker[])()  = {
+    VoidArray encTicker[]  = {
         motor0EncTick,
         motor1EncTick,
         motor2EncTick,
