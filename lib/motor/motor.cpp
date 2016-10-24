@@ -1,6 +1,6 @@
 #include "motor.h"
 
-Motor::Motor(Serial *pc, PwmOut *pwm, DigitalOut *dir1, DigitalOut *dir2, DigitalIn *fault) {
+Motor::Motor(USBSerial *pc, PwmOut *pwm, DigitalOut *dir1, DigitalOut *dir2, DigitalIn *fault) {
     _pc = pc;
     _pwm = pwm;
     _dir1 = dir1;

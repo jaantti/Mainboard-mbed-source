@@ -2,11 +2,12 @@
 #define  MOTOR_H
 #include "mbed.h"
 #include "PwmOut.h"
+#include "USBSerial.h"
 
 class Motor {
 public:
     Motor() = default;
-    Motor(Serial *pc, PwmOut *pwm, DigitalOut *dir1, DigitalOut *dir2, DigitalIn *fault);
+    Motor(USBSerial *pc, PwmOut *pwm, DigitalOut *dir1, DigitalOut *dir2, DigitalIn *fault);
     Motor (const Motor& ) = default;
 
     uint8_t pid_on;
@@ -29,11 +30,11 @@ public:
 private:
     static const uint PWM_PERIOD_US = 1000;
 
-    Serial *_pc;
+    USBSerial *_pc;
     PwmOut *_pwm;
     DigitalOut *_dir1;
     DigitalOut *_dir2;
-    DigitalIn *_fault;    
+    DigitalIn *_fault;
 
     union doublebyte {
         unsigned int value;
